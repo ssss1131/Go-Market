@@ -1,0 +1,69 @@
+# --- Go build artifacts ---
+/bin/
+/build/
+/dist/
+/tmp/
+/temp/
+/*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.cov
+*.cover
+*.prof
+*.pprof
+profile.out
+cpu.prof
+mem.prof
+
+# Go module/tool caches (не трогаем go.mod/go.sum/go.work/go.work.sum)
+.gomodcache/
+.gopath/
+/vendor/
+
+# --- Logs ---
+/logs/
+*.log
+
+# --- Env & secrets ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.cert
+
+# --- Docker/local data volumes ---
+/docker-data/
+/data/
+/postgres-data/
+/kafka-data/
+/minio-data/
+/zookeeper-data/
+/redpanda-data/
+/.docker/
+
+# docker-compose локальные оверрайды
+docker-compose.override.yml
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.iml
+*.code-workspace
+*.sw?
+*.swo
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Misc temp ---
+*.tmp
+~$*
