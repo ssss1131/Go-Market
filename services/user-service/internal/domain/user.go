@@ -1,0 +1,24 @@
+package domain
+
+import (
+	"github.com/google/uuid"
+	"time"
+)
+
+type UserStatus string
+
+const (
+	StatusPending UserStatus = "PENDING"
+	StatusActive  UserStatus = "ACTIVE"
+)
+
+type User struct {
+	ID           uuid.UUID  `gorm:"type:uuid;primaryKey"`
+	Name         string     `gorm:"size:255;not null"`
+	Surname      string     `gorm:"size:255;not null"`
+	Email        string     `gorm:"uniqueIndex;size:255;not null"`
+	PasswordHash string     `gorm:"size:255;not null"`
+	Status       UserStatus `gorm:"type:text;not null;default:PENDING"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
