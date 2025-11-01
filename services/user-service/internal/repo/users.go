@@ -3,6 +3,7 @@ package repo
 import (
 	"GoMarket/internal/domain"
 	"errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -21,15 +22,11 @@ func IsUniqueEmail(err error) bool {
 		return false
 	}
 
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
-		return true
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" {
+			return true
+		}
 	}
-	// TODO: не забыть убрать если хватит верхней проверки
-	//var pgErr *pgconn.PgError
-	//if errors.As(err, &pgErr) {
-	//	if pgErr.Code == "23505" {
-	//		return true
-	//	}
-	//}
 	return false
 }
