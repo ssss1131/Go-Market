@@ -30,3 +30,11 @@ func IsUniqueEmail(err error) bool {
 	}
 	return false
 }
+
+func (u *Users) ByEmail(email string) (*domain.User, error) {
+	var user domain.User
+	if err := u.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
