@@ -18,6 +18,7 @@
 profile.out
 cpu.prof
 mem.prof
+*.exe
 
 # Go module/tool caches (не трогаем go.mod/go.sum/go.work/go.work.sum)
 .gomodcache/
