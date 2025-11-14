@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoMarket/internal/http/handlers"
+	jwtutil "GoMarket/pkg/jwt"
 	"context"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	cfgpkg "GoMarket/internal"
-	"GoMarket/internal/domain"
 	"GoMarket/internal/repo"
 	"GoMarket/internal/service"
 
@@ -28,17 +28,15 @@ func main() {
 		log.Fatalf("open db: %v", err)
 	}
 
-	if err := db.AutoMigrate(&domain.User{}); err != nil {
-		log.Fatalf("migrate: %v", err)
-	}
+	signer := jwtutil.NewSigner(cfg.JWTSecret, cfg.AccessTTL)
 
 	usersRepo := repo.NewUsers(db)
-	authSvc := service.NewAuthService(usersRepo)
+	authSvc := service.NewAuthService(usersRepo, signer)
 	authH := handlers.NewAuthHandler(authSvc)
 
 	r := gin.Default()
-
 	r.POST("/auth/register", authH.Register)
+	r.POST("/auth/login", authH.Login)
 
 	srv := &http.Server{
 		Addr:         cfg.HTTPAddr,

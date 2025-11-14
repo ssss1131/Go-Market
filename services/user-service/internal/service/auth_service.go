@@ -4,13 +4,20 @@ import (
 	"GoMarket/internal/domain"
 	"GoMarket/internal/repo"
 	"GoMarket/pkg/hash"
+	jwtutil "GoMarket/pkg/jwt"
 	"errors"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type RegisterInput struct {
 	Name, Surname, Email, Password string
+}
+
+type LoginInput struct {
+	Email, Password string
 }
 
 type RegisterOutput struct {
@@ -18,16 +25,27 @@ type RegisterOutput struct {
 	Status domain.UserStatus
 }
 
-type AuthService struct {
-	users *repo.Users
+type LoginOutput struct {
+	AccessToken string
+	UserID      uuid.UUID
+	Email       string
 }
 
-var errEmailTaken = errors.New("email_taken")
+type AuthService struct {
+	users  *repo.Users
+	signer *jwtutil.Signer
+}
 
-func IsEmailTaken(err error) bool { return errors.Is(err, errEmailTaken) }
+var (
+	errEmailTaken         = errors.New("email_taken")
+	errInvalidCredentials = errors.New("invalid_credentials")
+)
 
-func NewAuthService(users *repo.Users) *AuthService {
-	return &AuthService{users: users}
+func IsEmailTaken(err error) bool         { return errors.Is(err, errEmailTaken) }
+func IsInvalidCredentials(err error) bool { return errors.Is(err, errInvalidCredentials) }
+
+func NewAuthService(users *repo.Users, signer *jwtutil.Signer) *AuthService {
+	return &AuthService{users: users, signer: signer}
 }
 
 func (s *AuthService) Register(in RegisterInput) (RegisterOutput, error) {
@@ -50,5 +68,30 @@ func (s *AuthService) Register(in RegisterInput) (RegisterOutput, error) {
 		}
 		return RegisterOutput{}, err
 	}
-	return RegisterOutput{user.ID, user.Status}, err
+	return RegisterOutput{user.ID, user.Status}, nil
+}
+
+func (s *AuthService) Login(in LoginInput) (LoginOutput, error) {
+	u, err := s.users.ByEmail(in.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return LoginOutput{}, errInvalidCredentials
+		}
+		return LoginOutput{}, err
+	}
+
+	if err := hash.CheckPassword(u.PasswordHash, in.Password); err != nil {
+		return LoginOutput{}, errInvalidCredentials
+	}
+
+	token, _, err := s.signer.NewAccess(u.ID.String(), u.Email)
+	if err != nil {
+		return LoginOutput{}, err
+	}
+
+	return LoginOutput{
+		AccessToken: token,
+		UserID:      u.ID,
+		Email:       u.Email,
+	}, nil
 }
