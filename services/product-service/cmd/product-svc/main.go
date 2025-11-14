@@ -10,7 +10,6 @@ import (
 	"time"
 
 	cfgpkg "GoProduct/internal"
-	"GoProduct/internal/domain"
 	"GoProduct/internal/http/handlers"
 	"GoProduct/internal/repo"
 	"GoProduct/internal/service"
@@ -28,9 +27,10 @@ func main() {
 		log.Fatalf("open db: %v", err)
 	}
 
-	if err := db.AutoMigrate(&domain.Product{}); err != nil {
-		log.Fatalf("migrate: %v", err)
-	}
+	// ВАЖНО: AutoMigrate больше не нужен – схему создают SQL-миграции
+	// if err := db.AutoMigrate(&domain.Product{}); err != nil {
+	//	log.Fatalf("migrate: %v", err)
+	// }
 
 	productsRepo := repo.NewProducts(db)
 	productSvc := service.NewProductService(productsRepo)
@@ -77,5 +77,4 @@ func main() {
 	}
 
 	log.Println("product-svc stopped cleanly")
-
 }

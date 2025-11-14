@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS products CASCADE;
+DROP FUNCTION IF EXISTS set_products_updated_at() CASCADE;
