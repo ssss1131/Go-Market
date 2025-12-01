@@ -1,9 +1,64 @@
 services:
   postgres:
-    image: 'postgres:16'
+    image: postgres:16
+    container_name: pg
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-go_market}
       POSTGRES_USER: ${PG_USERNAME}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: postgres
     ports:
-      - '${PG_PORT_HOST:-5433}:5432'
+      - "${PG_PORT_HOST:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d postgres" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PG_URL: ${USER_PG_URL}
+      HTTP_ADDR: ":8080"
+      JWT_SECRET: ${JWT_SECRET}
+      ACCESS_TTL: ${ACCESS_TTL}
+      REFRESH_TTL: ${REFRESH_TTL}
+      KAFKA_BROKERS: kafka:9092
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PG_URL: ${PRODUCT_PG_URL}
+      HTTP_ADDR: ":8081"
+      JWT_SECRET: ${JWT_SECRET}
+      ACCESS_TTL: ${ACCESS_TTL}
+      REFRESH_TTL: ${REFRESH_TTL}
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

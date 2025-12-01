@@ -1,7 +1,7 @@
 package repo
 
 import (
-	"GoMarket/internal/domain"
+	"GoUser/internal/domain"
 	"errors"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
