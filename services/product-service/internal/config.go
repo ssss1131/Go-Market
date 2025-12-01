@@ -14,13 +14,12 @@ type Config struct {
 }
 
 func MustLoad() *Config {
-	// Загружаем .env (если есть)
 	_ = godotenv.Load(".env")
 
 	cfg := &Config{
-		HTTPAddr:     getEnv("HTTP_ADDR", ":8081"),          // другой порт, чтобы не конфликтовать с user-service
-		PGURL:        mustEnv("PG_URL"),                     // строка подключения к базе
-		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"), // можно оставить как в user-service
+		HTTPAddr:     getEnv("HTTP_ADDR", ":8081"),
+		PGURL:        mustEnv("PRODUCT_PG_URL"),
+		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"),
 	}
 
 	return cfg

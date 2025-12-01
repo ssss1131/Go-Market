@@ -1,10 +1,10 @@
 package service
 
 import (
-	"GoMarket/internal/domain"
-	"GoMarket/internal/repo"
-	"GoMarket/pkg/hash"
-	jwtutil "GoMarket/pkg/jwt"
+	"GoUser/internal/domain"
+	"GoUser/internal/repo"
+	"GoUser/pkg/hash"
+	jwtutil "GoUser/pkg/jwt"
 	"errors"
 	"time"
 

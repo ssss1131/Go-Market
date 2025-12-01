@@ -16,8 +16,6 @@ func NewProductHandler(svc *service.ProductService) *ProductHandler {
 	return &ProductHandler{svc: svc}
 }
 
-// ---------- DTO-шки (request/response) ----------
-
 type createProductReq struct {
 	Name        string  `json:"name" binding:"required,max=255"`
 	Description string  `json:"description" binding:"max=1000"`
@@ -31,9 +29,6 @@ type productResp struct {
 	Price       float64 `json:"price"`
 }
 
-// ---------- HANDLERS ----------
-
-// POST /products
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,7 +56,6 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	})
 }
 
-// GET /products
 func (h *ProductHandler) List(c *gin.Context) {
 	products, err := h.svc.ListProducts()
 	if err != nil {
@@ -82,7 +76,6 @@ func (h *ProductHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GET /products/:id
 func (h *ProductHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -109,7 +102,6 @@ func (h *ProductHandler) Get(c *gin.Context) {
 	})
 }
 
-// PUT /products/:id
 type updateProductReq struct {
 	Name        string  `json:"name" binding:"required,max=255"`
 	Description string  `json:"description" binding:"max=1000"`
@@ -155,7 +147,6 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	})
 }
 
-// DELETE /products/:id
 func (h *ProductHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)

@@ -1,9 +1,7 @@
 package internal
 
 import (
-	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -27,24 +25,9 @@ type Config struct {
 func MustLoad() *Config {
 	_ = godotenv.Load(".env")
 
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		host := getEnv("PG_HOST", "localhost")
-		port := getEnv("PG_PORT", "5433")
-		db := getEnv("PG_DB", "go_market")
-		user := getEnv("PG_USERNAME", getEnv("PG_USER", "postgres"))
-		pass := mustEnv("PG_PASSWORD")
-
-		pgURL = fmt.Sprintf(
-			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			url.QueryEscape(user), url.QueryEscape(pass),
-			host, port, db,
-		)
-	}
-
 	cfg := &Config{
 		HTTPAddr:     getEnv("HTTP_ADDR", ":8080"),
-		PGURL:        pgURL,
+		PGURL:        mustEnv("USER_PG_URL"),
 		JWTSecret:    mustEnv("JWT_SECRET"),
 		AccessTTL:    getDuration("ACCESS_TTL", 15*time.Minute),
 		RefreshTTL:   getDuration("REFRESH_TTL", 14*24*time.Hour),

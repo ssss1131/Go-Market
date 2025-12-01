@@ -17,20 +17,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	migr "GoProduct/internal/migrate"
 )
 
 func main() {
 	cfg := cfgpkg.MustLoad()
+	migr.Up(cfg.PGURL)
 
 	db, err := gorm.Open(postgres.Open(cfg.PGURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}
-
-	// ВАЖНО: AutoMigrate больше не нужен – схему создают SQL-миграции
-	// if err := db.AutoMigrate(&domain.Product{}); err != nil {
-	//	log.Fatalf("migrate: %v", err)
-	// }
 
 	productsRepo := repo.NewProducts(db)
 	productSvc := service.NewProductService(productsRepo)
@@ -40,10 +38,10 @@ func main() {
 
 	products := r.Group("/products")
 	{
-		products.POST("/", productH.Create)   // создать продукт
-		products.GET("/", productH.List)      // список
-		products.GET("/:id", productH.Get)    // один продукт
-		products.PUT("/:id", productH.Update) // обновить
+		products.POST("/", productH.Create)
+		products.GET("/", productH.List)
+		products.GET("/:id", productH.Get)
+		products.PUT("/:id", productH.Update)
 		products.DELETE("/:id", productH.Delete)
 	}
 

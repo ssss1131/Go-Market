@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"GoMarket/internal/service"
+	"GoUser/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
