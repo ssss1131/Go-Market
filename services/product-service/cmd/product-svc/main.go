@@ -11,8 +11,10 @@ import (
 
 	cfgpkg "GoProduct/internal"
 	"GoProduct/internal/http/handlers"
+	"GoProduct/internal/http/middleware"
 	"GoProduct/internal/repo"
 	"GoProduct/internal/service"
+	jwtutil "GoProduct/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
@@ -30,6 +32,8 @@ func main() {
 		log.Fatalf("open db: %v", err)
 	}
 
+	verifier := jwtutil.NewVerifier(cfg.JWTSecret)
+
 	productsRepo := repo.NewProducts(db)
 	productSvc := service.NewProductService(productsRepo)
 	productH := handlers.NewProductHandler(productSvc)
@@ -37,6 +41,7 @@ func main() {
 	r := gin.Default()
 
 	products := r.Group("/products")
+	products.Use(middleware.AuthRequired(verifier))
 	{
 		products.POST("/", productH.Create)
 		products.GET("/", productH.List)

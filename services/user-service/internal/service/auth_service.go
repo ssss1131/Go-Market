@@ -8,7 +8,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -21,13 +20,13 @@ type LoginInput struct {
 }
 
 type RegisterOutput struct {
-	UserID uuid.UUID
+	UserID uint
 	Status domain.UserStatus
 }
 
 type LoginOutput struct {
 	AccessToken string
-	UserID      uuid.UUID
+	UserID      uint
 	Email       string
 }
 
@@ -54,7 +53,6 @@ func (s *AuthService) Register(in RegisterInput) (RegisterOutput, error) {
 		return RegisterOutput{}, err
 	}
 	user := domain.User{
-		ID:           uuid.New(),
 		Name:         in.Name,
 		Surname:      in.Surname,
 		Email:        in.Email,
@@ -84,7 +82,7 @@ func (s *AuthService) Login(in LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, errInvalidCredentials
 	}
 
-	token, _, err := s.signer.NewAccess(u.ID.String(), u.Email)
+	token, _, err := s.signer.NewAccess(u.ID, u.Email)
 	if err != nil {
 		return LoginOutput{}, err
 	}

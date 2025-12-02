@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -13,7 +12,7 @@ const (
 )
 
 type User struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primaryKey"`
+	ID           uint       `gorm:"primaryKey;autoIncrement"`
 	Name         string     `gorm:"size:255;not null"`
 	Surname      string     `gorm:"size:255;not null"`
 	Email        string     `gorm:"uniqueIndex;size:255;not null"`

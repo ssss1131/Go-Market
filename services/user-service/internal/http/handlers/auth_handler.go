@@ -27,13 +27,13 @@ type loginReq struct {
 }
 
 type registerResp struct {
-	UserID string `json:"user_id"`
+	UserID uint   `json:"user_id"`
 	Status string `json:"status"`
 }
 
 type loginResp struct {
 	AccessToken string `json:"access_token"`
-	UserID      string `json:"user_id"`
+	UserID      uint   `json:"user_id"`
 	Email       string `json:"email"`
 }
 
@@ -59,7 +59,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, registerResp{
-		UserID: out.UserID.String(),
+		UserID: out.UserID,
 		Status: string(out.Status),
 	})
 }
@@ -86,7 +86,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, loginResp{
 		AccessToken: out.AccessToken,
-		UserID:      out.UserID.String(),
+		UserID:      out.UserID,
 		Email:       out.Email,
 	})
 }

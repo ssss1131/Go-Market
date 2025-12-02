@@ -2,6 +2,7 @@ package jwtutil
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,12 +19,12 @@ func NewSigner(secret string, accessTTL time.Duration) *Signer {
 }
 
 type Claims struct {
-	UserID string `json:"sub"`
+	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-func (s *Signer) NewAccess(userID, email string) (token string, jti string, err error) {
+func (s *Signer) NewAccess(userID uint, email string) (token string, jti string, err error) {
 	now := time.Now()
 	jti = uuid.NewString()
 
@@ -32,7 +33,7 @@ func (s *Signer) NewAccess(userID, email string) (token string, jti string, err 
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "user-svc",
-			Subject:   userID,
+			Subject:   strconv.FormatUint(uint64(userID), 10),
 			ID:        jti,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.accessTTL)),
