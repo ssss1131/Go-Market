@@ -13,6 +13,7 @@ var errNotFound = errors.New("product_not_found")
 func IsNotFound(err error) bool { return errors.Is(err, errNotFound) }
 
 type CreateProductInput struct {
+	UserID      uint
 	Name        string
 	Description string
 	Price       float64
@@ -33,9 +34,9 @@ func NewProductService(products *repo.Products) *ProductService {
 	return &ProductService{products: products}
 }
 
-// CreateProduct — создать новый продукт
 func (s *ProductService) CreateProduct(in CreateProductInput) (*domain.Product, error) {
 	p := &domain.Product{
+		UserID:      in.UserID,
 		Name:        in.Name,
 		Description: in.Description,
 		Price:       in.Price,
@@ -48,7 +49,6 @@ func (s *ProductService) CreateProduct(in CreateProductInput) (*domain.Product, 
 	return p, nil
 }
 
-// GetProduct — получить продукт по ID
 func (s *ProductService) GetProduct(id uint) (*domain.Product, error) {
 	p, err := s.products.GetByID(id)
 	if err != nil {
@@ -60,12 +60,10 @@ func (s *ProductService) GetProduct(id uint) (*domain.Product, error) {
 	return p, nil
 }
 
-// ListProducts — список всех продуктов
 func (s *ProductService) ListProducts() ([]domain.Product, error) {
 	return s.products.List()
 }
 
-// UpdateProduct — обновить продукт
 func (s *ProductService) UpdateProduct(in UpdateProductInput) (*domain.Product, error) {
 	p, err := s.products.GetByID(in.ID)
 	if err != nil {
@@ -86,9 +84,7 @@ func (s *ProductService) UpdateProduct(in UpdateProductInput) (*domain.Product, 
 	return p, nil
 }
 
-// DeleteProduct — удалить продукт
 func (s *ProductService) DeleteProduct(id uint) error {
-	// Если хочешь отличать "нет такого" — можно сначала дернуть GetByID
 	_, err := s.products.GetByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

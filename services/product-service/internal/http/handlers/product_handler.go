@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"GoProduct/internal/http/middleware"
 	"GoProduct/internal/service"
 	"net/http"
 	"strconv"
@@ -24,12 +25,25 @@ type createProductReq struct {
 
 type productResp struct {
 	ID          uint    `json:"id"`
+	UserID      uint    `json:"user_id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 }
 
 func (h *ProductHandler) Create(c *gin.Context) {
+	userIDRaw, exists := c.Get(middleware.UserIDKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
+		return
+	}
+
+	userID, ok := userIDRaw.(uint)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id type"})
+		return
+	}
+
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,6 +51,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	}
 
 	input := service.CreateProductInput{
+		UserID:      userID,
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
@@ -50,6 +65,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
@@ -67,6 +83,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 	for _, p := range products {
 		resp = append(resp, productResp{
 			ID:          p.ID,
+			UserID:      p.UserID,
 			Name:        p.Name,
 			Description: p.Description,
 			Price:       p.Price,
@@ -96,6 +113,7 @@ func (h *ProductHandler) Get(c *gin.Context) {
 
 	c.JSON(http.StatusOK, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
@@ -141,6 +159,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	c.JSON(http.StatusOK, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,

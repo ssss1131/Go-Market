@@ -10,6 +10,7 @@ import (
 type Config struct {
 	HTTPAddr     string
 	PGURL        string
+	JWTSecret    string
 	KafkaBrokers string
 }
 
@@ -18,7 +19,8 @@ func MustLoad() *Config {
 
 	cfg := &Config{
 		HTTPAddr:     getEnv("HTTP_ADDR", ":8081"),
-		PGURL:        mustEnv("PRODUCT_PG_URL"),
+		PGURL:        mustEnv("PG_URL"),
+		JWTSecret:    mustEnv("JWT_SECRET"),
 		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"),
 	}
 
