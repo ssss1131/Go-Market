@@ -3,6 +3,7 @@ package repo
 import (
 	"GoUser/internal/domain"
 	"errors"
+
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
@@ -37,4 +38,21 @@ func (u *Users) ByEmail(email string) (*domain.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (u *Users) ByVerificationToken(token string) (*domain.User, error) {
+	var user domain.User
+	if err := u.db.Where("verification_token = ?", token).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (u *Users) Activate(userID uint) error {
+	return u.db.Model(&domain.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"status":             domain.StatusActive,
+			"verification_token": nil,
+		}).Error
 }

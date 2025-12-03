@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"GoUser/internal/service"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -27,8 +28,9 @@ type loginReq struct {
 }
 
 type registerResp struct {
-	UserID uint   `json:"user_id"`
-	Status string `json:"status"`
+	UserID  uint   `json:"user_id"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 type loginResp struct {
@@ -43,24 +45,28 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	input := service.RegisterInput{
 		Name:     req.Name,
 		Surname:  req.Surname,
 		Email:    req.Email,
 		Password: req.Password,
 	}
+
 	out, err := h.auth.Register(input)
 	if err != nil {
 		if service.IsEmailTaken(err) {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email already taken!"})
+			c.JSON(http.StatusConflict, gin.H{"error": "email already taken"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
 		return
 	}
+
 	c.JSON(http.StatusCreated, registerResp{
-		UserID: out.UserID,
-		Status: string(out.Status),
+		UserID:  out.UserID,
+		Status:  string(out.Status),
+		Message: "check your email to verify account",
 	})
 }
 
@@ -89,4 +95,28 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		UserID:      out.UserID,
 		Email:       out.Email,
 	})
+}
+
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token required"})
+		return
+	}
+
+	err := h.auth.VerifyEmail(token)
+	if err != nil {
+		if service.IsInvalidToken(err) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired token"})
+			return
+		}
+		if service.IsAlreadyActive(err) {
+			c.JSON(http.StatusOK, gin.H{"message": "account already active"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "email verified, account is now active"})
 }
