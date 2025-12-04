@@ -36,18 +36,21 @@ func main() {
 
 	productsRepo := repo.NewProducts(db)
 	productSvc := service.NewProductService(productsRepo)
-	productH := handlers.NewProductHandler(productSvc)
+	h := handlers.NewProductHandler(productSvc)
 
 	r := gin.Default()
 
-	products := r.Group("/products")
-	products.Use(middleware.AuthRequired(verifier))
+	products := r.Group("/products", middleware.AuthRequired(verifier))
 	{
-		products.POST("/", productH.Create)
-		products.GET("/", productH.List)
-		products.GET("/:id", productH.Get)
-		products.PUT("/:id", productH.Update)
-		products.DELETE("/:id", productH.Delete)
+		products.GET("/", h.List)
+		products.GET("/:id", h.Get)
+
+		write := products.Group("", middleware.RequireActive())
+		{
+			write.POST("/", h.Create)
+			write.PUT("/:id", h.Update)
+			write.DELETE("/:id", h.Delete)
+		}
 	}
 
 	srv := &http.Server{

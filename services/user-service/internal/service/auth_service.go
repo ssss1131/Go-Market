@@ -129,7 +129,7 @@ func (s *AuthService) Login(in LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, errInvalidCredentials
 	}
 
-	tok, _, err := s.signer.NewAccess(u.ID, u.Email)
+	tok, _, err := s.signer.NewAccess(u.ID, u.Email, string(u.Status))
 	if err != nil {
 		return LoginOutput{}, err
 	}
