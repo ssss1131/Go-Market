@@ -30,8 +30,8 @@ func New(brokers, topic, groupID string, sender *email.Sender) *Consumer {
 		Brokers:  strings.Split(brokers, ","),
 		Topic:    topic,
 		GroupID:  groupID,
-		MinBytes: 1,    // Read immediately, don't wait for 10KB
-		MaxBytes: 10e6, // 10MB max
+		MinBytes: 1,
+		MaxBytes: 10e6,
 	})
 
 	return &Consumer{
