@@ -25,12 +25,13 @@ type Consumer struct {
 }
 
 func New(brokers, topic, groupID string, sender *email.Sender) *Consumer {
+	log.Printf("Initializing Kafka consumer - brokers: %s, topic: %s, groupID: %s", brokers, topic, groupID)
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  strings.Split(brokers, ","),
 		Topic:    topic,
 		GroupID:  groupID,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
+		MinBytes: 1,    // Read immediately, don't wait for 10KB
+		MaxBytes: 10e6, // 10MB max
 	})
 
 	return &Consumer{
@@ -56,6 +57,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 				continue
 			}
 
+			log.Printf("consumer: received message from topic %s, partition %d, offset %d", msg.Topic, msg.Partition, msg.Offset)
 			c.handleMessage(msg)
 		}
 	}
