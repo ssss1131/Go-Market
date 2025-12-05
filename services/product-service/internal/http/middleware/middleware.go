@@ -40,7 +40,7 @@ func AuthRequired(verifier *jwtutil.Verifier) gin.HandlerFunc {
 
 func RequireActive() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		status, _ := c.Get("user_status")
+		status, _ := c.Get(Status)
 		if status != "ACTIVE" {
 			c.AbortWithStatusJSON(403, gin.H{"error": "account not active"})
 			return
