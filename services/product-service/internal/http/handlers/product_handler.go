@@ -31,6 +31,12 @@ type productResp struct {
 	Price       float64 `json:"price"`
 }
 
+type updateProductReq struct {
+	Name        string  `json:"name" binding:"required,max=255"`
+	Description string  `json:"description" binding:"max=1000"`
+	Price       float64 `json:"price" binding:"required,gt=0"`
+}
+
 func (h *ProductHandler) Create(c *gin.Context) {
 	userIDRaw, exists := c.Get(middleware.UserIDKey)
 	if !exists {
@@ -118,12 +124,6 @@ func (h *ProductHandler) Get(c *gin.Context) {
 		Description: p.Description,
 		Price:       p.Price,
 	})
-}
-
-type updateProductReq struct {
-	Name        string  `json:"name" binding:"required,max=255"`
-	Description string  `json:"description" binding:"max=1000"`
-	Price       float64 `json:"price" binding:"required,gt=0"`
 }
 
 func (h *ProductHandler) Update(c *gin.Context) {
