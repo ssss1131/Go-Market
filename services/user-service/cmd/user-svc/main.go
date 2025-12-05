@@ -1,8 +1,8 @@
 package main
 
 import (
-	"GoMarket/internal/http/handlers"
-	jwtutil "GoMarket/pkg/jwt"
+	"GoUser/internal/http/handlers"
+	jwtutil "GoUser/pkg/jwt"
 	"context"
 	"log"
 	"net/http"
@@ -11,17 +11,20 @@ import (
 	"syscall"
 	"time"
 
-	cfgpkg "GoMarket/internal"
-	"GoMarket/internal/repo"
-	"GoMarket/internal/service"
+	cfgpkg "GoUser/internal"
+	"GoUser/internal/repo"
+	"GoUser/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	migr "GoUser/internal/migrate"
 )
 
 func main() {
 	cfg := cfgpkg.MustLoad()
+	migr.Up(cfg.PGURL)
 
 	db, err := gorm.Open(postgres.Open(cfg.PGURL), &gorm.Config{})
 	if err != nil {
@@ -50,11 +53,11 @@ func main() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("http server: %v", err)
 		}
-	}() // запускаем сервер конкурентно чтобы не блокировать исполнение нижнего кода(типа многопоточность)
+	}()
 
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // ждем такой сигнал
-	<-quit                                               // блокаем нижний код пока не придёт уведомление(код выше)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

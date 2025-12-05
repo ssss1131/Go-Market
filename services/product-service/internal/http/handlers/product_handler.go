@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"GoProduct/internal/http/middleware"
 	"GoProduct/internal/service"
 	"net/http"
 	"strconv"
@@ -16,8 +17,6 @@ func NewProductHandler(svc *service.ProductService) *ProductHandler {
 	return &ProductHandler{svc: svc}
 }
 
-// ---------- DTO-шки (request/response) ----------
-
 type createProductReq struct {
 	Name        string  `json:"name" binding:"required,max=255"`
 	Description string  `json:"description" binding:"max=1000"`
@@ -26,15 +25,25 @@ type createProductReq struct {
 
 type productResp struct {
 	ID          uint    `json:"id"`
+	UserID      uint    `json:"user_id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 }
 
-// ---------- HANDLERS ----------
-
-// POST /products
 func (h *ProductHandler) Create(c *gin.Context) {
+	userIDRaw, exists := c.Get(middleware.UserIDKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
+		return
+	}
+
+	userID, ok := userIDRaw.(uint)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id type"})
+		return
+	}
+
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -42,6 +51,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	}
 
 	input := service.CreateProductInput{
+		UserID:      userID,
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
@@ -55,13 +65,13 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
 	})
 }
 
-// GET /products
 func (h *ProductHandler) List(c *gin.Context) {
 	products, err := h.svc.ListProducts()
 	if err != nil {
@@ -73,6 +83,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 	for _, p := range products {
 		resp = append(resp, productResp{
 			ID:          p.ID,
+			UserID:      p.UserID,
 			Name:        p.Name,
 			Description: p.Description,
 			Price:       p.Price,
@@ -82,7 +93,6 @@ func (h *ProductHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GET /products/:id
 func (h *ProductHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -103,13 +113,13 @@ func (h *ProductHandler) Get(c *gin.Context) {
 
 	c.JSON(http.StatusOK, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
 	})
 }
 
-// PUT /products/:id
 type updateProductReq struct {
 	Name        string  `json:"name" binding:"required,max=255"`
 	Description string  `json:"description" binding:"max=1000"`
@@ -149,13 +159,13 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	c.JSON(http.StatusOK, productResp{
 		ID:          p.ID,
+		UserID:      p.UserID,
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
 	})
 }
 
-// DELETE /products/:id
 func (h *ProductHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
