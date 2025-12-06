@@ -9,6 +9,7 @@ import (
 )
 
 const UserIDKey = "user_id"
+const Status = "status"
 
 func AuthRequired(verifier *jwtutil.Verifier) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -32,6 +33,18 @@ func AuthRequired(verifier *jwtutil.Verifier) gin.HandlerFunc {
 		}
 
 		c.Set(UserIDKey, claims.UserID)
+		c.Set(Status, claims.Status)
+		c.Next()
+	}
+}
+
+func RequireActive() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		status, _ := c.Get(Status)
+		if status != "ACTIVE" {
+			c.AbortWithStatusJSON(403, gin.H{"error": "account not active"})
+			return
+		}
 		c.Next()
 	}
 }

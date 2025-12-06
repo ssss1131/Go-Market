@@ -18,6 +18,7 @@ func NewVerifier(secret string) *Verifier {
 type Claims struct {
 	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
+	Status string `json:"status"`
 	jwt.RegisteredClaims
 }
 

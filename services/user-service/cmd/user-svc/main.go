@@ -3,6 +3,7 @@ package main
 import (
 	"GoUser/internal/http/handlers"
 	jwtutil "GoUser/pkg/jwt"
+	"GoUser/pkg/kafka"
 	"context"
 	"log"
 	"net/http"
@@ -32,14 +33,17 @@ func main() {
 	}
 
 	signer := jwtutil.NewSigner(cfg.JWTSecret, cfg.AccessTTL)
+	producer := kafka.NewProducer(cfg.KafkaBrokers)
+	defer producer.Close()
 
 	usersRepo := repo.NewUsers(db)
-	authSvc := service.NewAuthService(usersRepo, signer)
+	authSvc := service.NewAuthService(usersRepo, signer, producer, cfg.BaseURL)
 	authH := handlers.NewAuthHandler(authSvc)
 
 	r := gin.Default()
 	r.POST("/auth/register", authH.Register)
 	r.POST("/auth/login", authH.Login)
+	r.GET("/auth/verify", authH.VerifyEmail)
 
 	srv := &http.Server{
 		Addr:         cfg.HTTPAddr,

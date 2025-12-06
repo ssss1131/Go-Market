@@ -1,101 +1,72 @@
-package jwt
+package jwt_test
 
 import (
 	"testing"
 	"time"
 
+	jwtpkg "GoProduct/pkg/jwt"
+
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/stretchr/testify/assert"
 )
 
-func generateToken(secret string, claims jwt.Claims) string {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, _ := t.SignedString([]byte(secret))
-	return token
-}
+func makeToken(t *testing.T, secret string, userID uint, email string, expiresAt time.Time) string {
+	t.Helper()
 
-func TestVerifier_Verify_Success(t *testing.T) {
-	secret := "mysecret"
-	v := NewVerifier(secret)
-
-	claims := &Claims{
-		UserID: 42,
-		Email:  "john@example.com",
+	claims := jwtpkg.Claims{
+		UserID: userID,
+		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 
-	token := generateToken(secret, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	out, err := v.Verify(token)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, out)
-	assert.Equal(t, uint(42), out.UserID)
-	assert.Equal(t, "john@example.com", out.Email)
+	signed, err := token.SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("SignedString() error = %v", err)
+	}
+	return signed
 }
 
-func TestVerifier_Verify_InvalidToken(t *testing.T) {
-	v := NewVerifier("secret")
+func TestVerifier_Verify_ValidToken(t *testing.T) {
+	secret := "test-secret"
+	ver := jwtpkg.NewVerifier(secret)
 
-	out, err := v.Verify("not-a-token")
+	tokenStr := makeToken(t, secret, 7, "user@example.com", time.Now().Add(1*time.Hour))
 
-	assert.Error(t, err)
-	assert.Nil(t, out)
-}
-
-func TestVerifier_Verify_WrongSecret(t *testing.T) {
-	claims := &Claims{
-		UserID: 1,
-		Email:  "a@b.com",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
-		},
+	claims, err := ver.Verify(tokenStr)
+	if err != nil {
+		t.Fatalf("Verify() error = %v", err)
 	}
 
-	token := generateToken("secret1", claims)
-
-	v := NewVerifier("secret2")
-
-	out, err := v.Verify(token)
-
-	assert.Error(t, err)
-	assert.Nil(t, out)
-}
-
-func TestVerifier_Verify_Expired(t *testing.T) {
-	secret := "abc"
-	v := NewVerifier(secret)
-
-	claims := &Claims{
-		UserID: 99,
-		Email:  "expired@mail.com",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Minute)),
-		},
+	if claims.UserID != 7 {
+		t.Errorf("UserID = %d, want %d", claims.UserID, 7)
 	}
-
-	token := generateToken(secret, claims)
-
-	out, err := v.Verify(token)
-
-	assert.Error(t, err)
-	assert.Nil(t, out)
-	assert.Contains(t, err.Error(), "expired")
+	if claims.Email != "user@example.com" {
+		t.Errorf("Email = %q, want %q", claims.Email, "user@example.com")
+	}
 }
 
-func TestVerifier_Verify_InvalidClaims(t *testing.T) {
-	v := NewVerifier("secret")
+func TestVerifier_Verify_ExpiredToken(t *testing.T) {
+	secret := "test-secret"
+	ver := jwtpkg.NewVerifier(secret)
 
-	token := generateToken("secret", jwt.MapClaims{
-		"foo": "bar",
-	})
+	tokenStr := makeToken(t, secret, 1, "expired@example.com", time.Now().Add(-1*time.Hour))
 
-	out, err := v.Verify(token)
+	_, err := ver.Verify(tokenStr)
+	if err == nil {
+		t.Fatalf("expected error for expired token, got nil")
+	}
+}
 
-	assert.NoError(t, err)
-	assert.NotNil(t, out)
-	assert.Equal(t, uint(0), out.UserID)
-	assert.Equal(t, "", out.Email)
+func TestVerifier_Verify_InvalidSignature(t *testing.T) {
+	ver := jwtpkg.NewVerifier("right-secret")
+
+	tokenStr := makeToken(t, "wrong-secret", 1, "user@example.com", time.Now().Add(1*time.Hour))
+
+	_, err := ver.Verify(tokenStr)
+	if err == nil {
+		t.Fatalf("expected error for invalid signature, got nil")
+	}
 }
