@@ -77,7 +77,9 @@ func main() {
 	}
 
 	sqlDB, _ := db.DB()
-	sqlDB.Close()
-
+	err = sqlDB.Close()
+	if err != nil {
+		log.Fatalf("failed to close db: %v", err)
+	}
 	log.Println("cart-service stopped cleanly")
 }

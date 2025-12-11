@@ -20,7 +20,6 @@ func Up(pgURL string) {
 		log.Fatalf("migrate: new with source: %v", err)
 	}
 	defer m.Close()
-
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("migrate: up: %v", err)
 	}

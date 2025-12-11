@@ -3,6 +3,7 @@ package handlers
 import (
 	"GoCart/internal/service"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,9 +45,11 @@ func (h *CartHandler) UpdateItem(c *gin.Context) {
 	productID := uint(mustUint(c.Param("product_id")))
 
 	var req AddRequest
-	c.BindJSON(&req)
-
-	err := h.cartService.UpdateItem(userID, productID, req.Quantity)
+	err := c.BindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+	}
+	err = h.cartService.UpdateItem(userID, productID, req.Quantity)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -77,6 +80,9 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 
 func mustUint(s string) uint {
 	var n uint
-	fmt.Sscanf(s, "%d", &n)
+	_, err := fmt.Sscanf(s, "%d", &n)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return n
 }
