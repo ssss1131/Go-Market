@@ -3,3 +3,4 @@ go 1.25.1
 use ./services/user-service
 use ./services/product-service
 use ./services/notifications-service
+use ./services/cart-service
