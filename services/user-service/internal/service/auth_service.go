@@ -17,6 +17,7 @@ import (
 
 type RegisterInput struct {
 	Name, Surname, Email, Password string
+	Role                           string
 }
 
 type LoginInput struct {
@@ -81,6 +82,14 @@ func (s *AuthService) Register(in RegisterInput) (RegisterOutput, error) {
 		return RegisterOutput{}, err
 	}
 
+	role := in.Role
+	if role == "" {
+		role = "buyer"
+	}
+	if role != "buyer" && role != "seller" {
+		role = "buyer"
+	}
+
 	user := domain.User{
 		Name:              in.Name,
 		Surname:           in.Surname,
@@ -89,6 +98,7 @@ func (s *AuthService) Register(in RegisterInput) (RegisterOutput, error) {
 		Status:            domain.StatusPending,
 		VerificationToken: verifyToken,
 		CreatedAt:         time.Now(),
+		Role:              role,
 	}
 
 	if err := s.users.Create(&user); err != nil {
@@ -129,7 +139,7 @@ func (s *AuthService) Login(in LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, errInvalidCredentials
 	}
 
-	tok, _, err := s.signer.NewAccess(u.ID, u.Email, string(u.Status))
+	tok, _, err := s.signer.NewAccess(u.ID, u.Email, string(u.Status), u.Role)
 	if err != nil {
 		return LoginOutput{}, err
 	}

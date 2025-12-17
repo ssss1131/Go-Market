@@ -10,6 +10,7 @@ import (
 
 const UserIDKey = "user_id"
 const Status = "status"
+const RoleKey = "role"
 
 func AuthRequired(verifier *jwtutil.Verifier) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -34,6 +35,7 @@ func AuthRequired(verifier *jwtutil.Verifier) gin.HandlerFunc {
 
 		c.Set(UserIDKey, claims.UserID)
 		c.Set(Status, claims.Status)
+		c.Set(RoleKey, claims.Role)
 		c.Next()
 	}
 }
@@ -43,6 +45,17 @@ func RequireActive() gin.HandlerFunc {
 		status, _ := c.Get(Status)
 		if status != "ACTIVE" {
 			c.AbortWithStatusJSON(403, gin.H{"error": "account not active"})
+			return
+		}
+		c.Next()
+	}
+}
+
+func RequireSeller() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, _ := c.Get(RoleKey)
+		if role != "seller" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "seller only"})
 			return
 		}
 		c.Next()

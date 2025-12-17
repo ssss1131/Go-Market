@@ -21,10 +21,11 @@ type Claims struct {
 	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
 	Status string `json:"status"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func (s *Signer) NewAccess(userID uint, email, status string) (token string, jti string, err error) {
+func (s *Signer) NewAccess(userID uint, email, status, role string) (token string, jti string, err error) {
 	now := time.Now()
 	jti = uuid.NewString()
 
@@ -32,6 +33,7 @@ func (s *Signer) NewAccess(userID uint, email, status string) (token string, jti
 		UserID: userID,
 		Email:  email,
 		Status: status,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "user-svc",
 			Subject:   strconv.FormatUint(uint64(userID), 10),

@@ -45,7 +45,7 @@ func main() {
 		products.GET("/", h.List)
 		products.GET("/:id", h.Get)
 
-		write := products.Group("", middleware.RequireActive())
+		write := products.Group("", middleware.RequireActive(), middleware.RequireSeller())
 		{
 			write.POST("/", h.Create)
 			write.PUT("/:id", h.Update)
