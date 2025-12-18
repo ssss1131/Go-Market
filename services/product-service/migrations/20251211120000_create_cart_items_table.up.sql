@@ -8,12 +8,6 @@ CREATE TABLE IF NOT EXISTS cart_items
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_cart_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE,
-
     CONSTRAINT fk_cart_product
     FOREIGN KEY (product_id)
     REFERENCES products(id)

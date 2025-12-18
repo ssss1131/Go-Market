@@ -1,3 +1,4 @@
-ALTER TABLE users ADD COLUMN verification_token VARCHAR(64);
+ALTER TABLE users
+    ADD COLUMN verification_token VARCHAR(64);
 
-CREATE INDEX idx_users_verification_token ON users(verification_token);
+CREATE INDEX idx_users_verification_token ON users (verification_token);
