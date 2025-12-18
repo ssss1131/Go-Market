@@ -12,6 +12,7 @@ import (
 	cfgpkg "GoProduct/internal"
 	"GoProduct/internal/http/handlers"
 	"GoProduct/internal/http/middleware"
+	migr "GoProduct/internal/migrate"
 	"GoProduct/internal/repo"
 	"GoProduct/internal/service"
 	jwtutil "GoProduct/pkg/jwt"
@@ -19,8 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	migr "GoProduct/internal/migrate"
 )
 
 func main() {
@@ -35,21 +34,34 @@ func main() {
 	verifier := jwtutil.NewVerifier(cfg.JWTSecret)
 
 	productsRepo := repo.NewProducts(db)
+	cartRepo := repo.NewCart(db)
+
 	productSvc := service.NewProductService(productsRepo)
-	h := handlers.NewProductHandler(productSvc)
+	cartSvc := service.NewCartService(cartRepo, productSvc)
+
+	productH := handlers.NewProductHandler(productSvc)
+	cartH := handlers.NewCartHandler(cartSvc)
 
 	r := gin.Default()
 
 	products := r.Group("/products", middleware.AuthRequired(verifier))
 	{
-		products.GET("/", h.List)
-		products.GET("/:id", h.Get)
+		products.GET("/", productH.List)
+		products.GET("/:id", productH.Get)
 
 		write := products.Group("", middleware.RequireActive(), middleware.RequireSeller())
 		{
-			write.POST("/", h.Create)
-			write.PUT("/:id", h.Update)
-			write.DELETE("/:id", h.Delete)
+			write.POST("/", productH.Create)
+			write.PUT("/:id", productH.Update)
+			write.DELETE("/:id", productH.Delete)
+		}
+
+		cart := products.Group("/cart", middleware.RequireActive())
+		{
+			cart.GET("/", cartH.GetCart)
+			cart.POST("/", cartH.AddItem)
+			cart.PUT("/:product_id", cartH.UpdateItem)
+			cart.DELETE("/:product_id", cartH.DeleteItem)
 		}
 	}
 
