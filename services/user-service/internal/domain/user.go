@@ -21,4 +21,5 @@ type User struct {
 	VerificationToken string     `gorm:"size:64"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	Role              string `gorm:"type:text;not null;default:buyer" json:"role"`
 }
