@@ -17,6 +17,7 @@ type CreateProductInput struct {
 	Name        string
 	Description string
 	Price       float64
+	CategoryIDs []uint
 }
 
 type UpdateProductInput struct {
@@ -24,10 +25,21 @@ type UpdateProductInput struct {
 	Name        string
 	Description string
 	Price       float64
+	CategoryIDs []uint
 }
 
 type ProductService struct {
 	products *repo.Products
+}
+
+type ListProductsFilter struct {
+	Q        string
+	Category string
+	MinPrice *float64
+	MaxPrice *float64
+	Sort     string
+	Limit    int
+	Offset   int
 }
 
 func NewProductService(products *repo.Products) *ProductService {
@@ -46,7 +58,17 @@ func (s *ProductService) CreateProduct(in CreateProductInput) (*domain.Product, 
 		return nil, err
 	}
 
+	if err := s.products.SetCategories(p.ID, in.CategoryIDs); err != nil {
+		return nil, err
+	}
+
+	p, err := s.products.GetByID(p.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return p, nil
+
 }
 
 func (s *ProductService) GetProduct(id uint) (*domain.Product, error) {
@@ -81,7 +103,17 @@ func (s *ProductService) UpdateProduct(in UpdateProductInput) (*domain.Product, 
 		return nil, err
 	}
 
+	if err := s.products.SetCategories(p.ID, in.CategoryIDs); err != nil {
+		return nil, err
+	}
+
+	p, err = s.products.GetByID(p.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return p, nil
+
 }
 
 func (s *ProductService) DeleteProduct(id uint) error {
@@ -94,4 +126,16 @@ func (s *ProductService) DeleteProduct(id uint) error {
 	}
 
 	return s.products.Delete(id)
+}
+
+func (s *ProductService) ListProductsFiltered(f ListProductsFilter) ([]domain.Product, error) {
+	return s.products.ListFiltered(repo.ProductFilter{
+		Q:        f.Q,
+		Category: f.Category,
+		MinPrice: f.MinPrice,
+		MaxPrice: f.MaxPrice,
+		Sort:     f.Sort,
+		Limit:    f.Limit,
+		Offset:   f.Offset,
+	})
 }
