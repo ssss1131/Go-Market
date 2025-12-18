@@ -12,7 +12,7 @@ var ErrProductNotFound = errors.New("product not found")
 
 type CartService struct {
 	cartRepo       *repo.Cart
-	productService *ProductService // Используем напрямую, а не HTTP!
+	productService *ProductService
 }
 
 func NewCartService(cartRepo *repo.Cart, productService *ProductService) *CartService {
@@ -23,7 +23,6 @@ func NewCartService(cartRepo *repo.Cart, productService *ProductService) *CartSe
 }
 
 func (s *CartService) AddItem(userID, productID uint, quantity int) error {
-	// Проверяем, что продукт существует (через ProductService напрямую!)
 	_, err := s.productService.GetProduct(productID)
 	if err != nil {
 		if IsNotFound(err) {
@@ -36,19 +35,16 @@ func (s *CartService) AddItem(userID, productID uint, quantity int) error {
 		return errors.New("quantity must be positive")
 	}
 
-	// Проверяем, есть ли уже этот товар в корзине
 	existing, err := s.cartRepo.GetByUserAndProduct(userID, productID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
 	if existing.ID != 0 {
-		// Обновляем количество
 		existing.Quantity += quantity
 		return s.cartRepo.Update(existing)
 	}
 
-	// Создаем новую запись
 	item := &domain.CartItem{
 		UserID:    userID,
 		ProductID: productID,

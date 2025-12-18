@@ -3,9 +3,23 @@ CREATE TABLE IF NOT EXISTS cart_items
     id         SERIAL PRIMARY KEY,
     user_id    INT NOT NULL,
     product_id INT NOT NULL,
+
     quantity   INT NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_cart_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_cart_product
+    FOREIGN KEY (product_id)
+    REFERENCES products(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+
     UNIQUE(user_id, product_id)
     );
 
