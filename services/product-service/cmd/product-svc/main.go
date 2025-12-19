@@ -35,12 +35,15 @@ func main() {
 
 	productsRepo := repo.NewProducts(db)
 	cartRepo := repo.NewCart(db)
+	categoriesRepo := repo.NewCategories(db)
 
 	productSvc := service.NewProductService(productsRepo)
 	cartSvc := service.NewCartService(cartRepo, productSvc)
+	categorySvc := service.NewCategoryService(categoriesRepo)
 
 	productH := handlers.NewProductHandler(productSvc)
 	cartH := handlers.NewCartHandler(cartSvc)
+	categoryH := handlers.NewCategoryHandler(categorySvc)
 
 	r := gin.Default()
 
@@ -62,6 +65,19 @@ func main() {
 			cart.POST("/", cartH.AddItem)
 			cart.PUT("/:product_id", cartH.UpdateItem)
 			cart.DELETE("/:product_id", cartH.DeleteItem)
+		}
+	}
+
+	categories := r.Group("/categories", middleware.AuthRequired(verifier))
+	{
+		categories.GET("/", categoryH.List)
+		categories.GET("/:id", categoryH.Get)
+
+		write := categories.Group("", middleware.RequireActive(), middleware.RequireSeller())
+		{
+			write.POST("/", categoryH.Create)
+			write.PUT("/:id", categoryH.Update)
+			write.DELETE("/:id", categoryH.Delete)
 		}
 	}
 
