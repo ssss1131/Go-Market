@@ -20,6 +20,7 @@ type registerReq struct {
 	Surname  string `json:"surname" binding:"required,max=255"`
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
+	Role     string `json:"role" binding:"required,oneof=buyer seller"`
 }
 
 type loginReq struct {
@@ -51,6 +52,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Surname:  req.Surname,
 		Email:    req.Email,
 		Password: req.Password,
+		Role:     req.Role,
 	}
 
 	out, err := h.auth.Register(input)
