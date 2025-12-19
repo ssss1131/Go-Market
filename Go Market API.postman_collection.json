@@ -1,0 +1,551 @@
+{
+	"info": {
+		"_postman_id": "f5aef271-e673-4d7b-931a-b85b3d72d9f5",
+		"name": "Go Market API",
+		"description": "API collection for Go-Market microservices.\n\n## Quick Start\n1. Import environment file\n2. Register → Check MailHog → Verify → Login\n3. Token auto-saves after login\n\n## Services\n- User Service: Port 8080\n- Product Service: Port 8081\n- MailHog UI: Port 8025",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "37054640"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John\",\n    \"surname\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Register seller",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Alex\",\n    \"surname\": \"Kai\",\n    \"email\": \"seller@example.com\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Register - Invalid (short password)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John\",\n    \"surname\": \"Doe\",\n    \"email\": \"john2@example.com\",\n    \"password\": \"short\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.access_token) {",
+									"        pm.environment.set('access_token', response.access_token);",
+									"        console.log('Token saved');",
+									"    }",
+									"    if (response.user_id) {",
+									"        pm.environment.set('user_id', response.user_id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Login seller",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.access_token) {",
+									"        pm.environment.set('access_token', response.access_token);",
+									"        console.log('Token saved');",
+									"    }",
+									"    if (response.user_id) {",
+									"        pm.environment.set('user_id', response.user_id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"seller@example.com\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Invalid credentials",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": "{{user_service_url}}/auth/login"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "List Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/categories/"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/categories/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category (Seller)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set('category_id', response.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Gaming\",\n    \"slug\": \"gaming\"\n}"
+						},
+						"url": "{{product_service_url}}/categories/"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category (Seller)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Gaming & Consoles\",\n    \"slug\": \"gaming-consoles\"\n}"
+						},
+						"url": "{{product_service_url}}/categories/{{category_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category (Seller)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/categories/{{category_id}}"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/"
+					},
+					"response": []
+				},
+				{
+					"name": "List Products - With Filters",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{product_service_url}}/products/?q=phone&min_price=100&max_price=1000&sort=price_asc&limit=10",
+							"host": [
+								"{{product_service_url}}"
+							],
+							"path": [
+								"products",
+								""
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "phone"
+								},
+								{
+									"key": "min_price",
+									"value": "100"
+								},
+								{
+									"key": "max_price",
+									"value": "1000"
+								},
+								{
+									"key": "sort",
+									"value": "price_asc"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Products - By Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{product_service_url}}/products/?category=electronics",
+							"host": [
+								"{{product_service_url}}"
+							],
+							"path": [
+								"products",
+								""
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "electronics"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/{{product_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product (Seller)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set('product_id', response.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"iPhone 15 Pro\",\n    \"description\": \"Latest Apple smartphone\",\n    \"price\": 999.99,\n    \"category_ids\": [1]\n}"
+						},
+						"url": "{{product_service_url}}/products/"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product (Seller)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"iPhone 15 Pro Max\",\n    \"description\": \"Updated description\",\n    \"price\": 1199.99,\n    \"category_ids\": [1, 2]\n}"
+						},
+						"url": "{{product_service_url}}/products/{{product_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product (Seller)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/{{product_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product - Not Found",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/99999"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "Get Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/cart/"
+					},
+					"response": []
+				},
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"product_id\": 1,\n    \"quantity\": 2\n}"
+						},
+						"url": "{{product_service_url}}/products/cart/"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Cart Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 5\n}"
+						},
+						"url": "{{product_service_url}}/products/cart/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Cart Item",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{product_service_url}}/products/cart/1"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": {
+			"token": "{{access_token}}"
+		}
+	}
+}
