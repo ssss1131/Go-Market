@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net"
 	"strings"
+	"time"
 
 	"GoNotification/internal/email"
 
@@ -20,28 +22,83 @@ type UserRegisteredEvent struct {
 }
 
 type Consumer struct {
-	reader *kafka.Reader
-	sender *email.Sender
+	brokers string
+	topic   string
+	groupID string
+	sender  *email.Sender
+	reader  *kafka.Reader
 }
 
 func New(brokers, topic, groupID string, sender *email.Sender) *Consumer {
-	log.Printf("Initializing Kafka consumer - brokers: %s, topic: %s, groupID: %s", brokers, topic, groupID)
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     strings.Split(brokers, ","),
-		Topic:       topic,
-		GroupID:     groupID,
-		MinBytes:    1,
-		MaxBytes:    10e6,
-		StartOffset: kafka.FirstOffset,
-	})
-
 	return &Consumer{
-		reader: reader,
-		sender: sender,
+		brokers: brokers,
+		topic:   topic,
+		groupID: groupID,
+		sender:  sender,
 	}
 }
 
+func (c *Consumer) ensureTopicExists(ctx context.Context) error {
+	brokerList := strings.Split(c.brokers, ",")
+
+	var conn *kafka.Conn
+	var err error
+	for attempt := 1; attempt <= 30; attempt++ {
+		conn, err = kafka.Dial("tcp", brokerList[0])
+		if err == nil {
+			break
+		}
+		log.Printf("consumer: attempt %d - waiting for Kafka: %v", attempt, err)
+		time.Sleep(2 * time.Second)
+	}
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	controller, err := conn.Controller()
+	if err != nil {
+		return err
+	}
+
+	controllerConn, err := kafka.Dial("tcp", net.JoinHostPort(controller.Host, "9092"))
+	if err != nil {
+		return err
+	}
+	defer controllerConn.Close()
+
+	err = controllerConn.CreateTopics(kafka.TopicConfig{
+		Topic:             c.topic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	})
+	if err != nil && !strings.Contains(err.Error(), "Topic with this name already exists") {
+		log.Printf("consumer: create topic warning: %v", err)
+	}
+
+	log.Printf("consumer: topic '%s' ready", c.topic)
+	return nil
+}
+
 func (c *Consumer) Start(ctx context.Context) error {
+	log.Printf("consumer: initializing - brokers: %s, topic: %s", c.brokers, c.topic)
+
+	if err := c.ensureTopicExists(ctx); err != nil {
+		return err
+	}
+
+	time.Sleep(2 * time.Second)
+
+	c.reader = kafka.NewReader(kafka.ReaderConfig{
+		Brokers:        strings.Split(c.brokers, ","),
+		Topic:          c.topic,
+		GroupID:        c.groupID,
+		MinBytes:       1,
+		MaxBytes:       10e6,
+		StartOffset:    kafka.FirstOffset,
+		CommitInterval: time.Second,
+	})
+
 	log.Println("consumer: started, waiting for messages...")
 
 	for {
@@ -55,6 +112,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 					return nil
 				}
 				log.Printf("consumer: read error: %v", err)
+				time.Sleep(time.Second)
 				continue
 			}
 
